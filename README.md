@@ -222,7 +222,7 @@ services:
     container_name: moontv-kvrocks
     restart: unless-stopped
     volumes:
-      - kvrocks-data:/var/lib/kvrocks/data
+      - kvrocks-data:/var/lib/kvrocks/db
     networks:
       - moontv-network
 networks:
@@ -231,6 +231,7 @@ networks:
 volumes:
   kvrocks-data:
 ```
+（若指定kvrocks-data目录，需要将所挂载的数据目录权限调整为777否则会导致创建数据库失败）
 
 ### SQLite 存储
 
