@@ -233,6 +233,47 @@ export function markBangumiImageFallbackActive(): void {
   );
 }
 
+function normalizeComparableUrl(url: string): string {
+  if (typeof window === 'undefined') return url;
+
+  try {
+    return new URL(url, window.location.href).href;
+  } catch {
+    return url;
+  }
+}
+
+export function clearBangumiImageFallbackCacheIfFailed(
+  target: HTMLImageElement,
+  originalUrl: string
+): boolean {
+  if (!originalUrl || !isBangumiImageUrl(originalUrl)) {
+    return false;
+  }
+
+  const fallbackUrl = getBangumiImageFallbackUrl(originalUrl);
+  if (!fallbackUrl) {
+    return false;
+  }
+
+  const normalizedFallbackUrl = normalizeComparableUrl(fallbackUrl);
+  const failedUrls = [target.currentSrc, target.src]
+    .filter(Boolean)
+    .map(normalizeComparableUrl);
+  const isFallbackFailure =
+    target.dataset.bangumiBackupTried === 'true' ||
+    failedUrls.includes(normalizedFallbackUrl);
+
+  if (!isFallbackFailure) {
+    return false;
+  }
+
+  target.dataset.bangumiBackupFailed = 'true';
+  delete target.dataset.bangumiBackupTried;
+  clearBangumiImageFallbackCache();
+  return true;
+}
+
 function isBangumiImageFallbackActive(): boolean {
   if (typeof window === 'undefined') return false;
 
@@ -326,6 +367,10 @@ export function tryApplyBangumiImageFallback(
   }
 
   if (target.dataset.bangumiBackupTried === 'true') {
+    return false;
+  }
+
+  if (target.dataset.bangumiBackupFailed === 'true') {
     return false;
   }
 

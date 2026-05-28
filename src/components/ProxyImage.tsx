@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  clearBangumiImageFallbackCacheIfFailed,
   processImageUrl,
   tryApplyBangumiImageFallback,
   tryApplyDoubanImageFallback,
@@ -62,6 +63,11 @@ const ProxyImage: React.FC<ProxyImageProps> = ({
       tryApplyBangumiImageFallback(img, originalSrc)
     ) {
       setCurrentSrc(img.src);
+      return;
+    }
+
+    if (clearBangumiImageFallbackCacheIfFailed(img, originalSrc)) {
+      setCurrentSrc(processImageUrl(originalSrc));
       return;
     }
 

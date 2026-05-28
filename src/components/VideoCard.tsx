@@ -35,6 +35,7 @@ import {
 import { isNetdiskSource } from '@/lib/netdisk/source';
 import {
   base58Decode,
+  clearBangumiImageFallbackCacheIfFailed,
   getBangumiImageFallbackUrl,
   getDoubanImageFallbackUrl,
   markBangumiImageFallbackActive,
@@ -978,6 +979,14 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   ) {
                     clearBangumiImageTimeout();
                     setDisplayPoster(bangumiFallbackPoster);
+                    return;
+                  }
+
+                  if (
+                    clearBangumiImageFallbackCacheIfFailed(img, actualPoster)
+                  ) {
+                    clearBangumiImageTimeout();
+                    setDisplayPoster(processedPoster);
                     return;
                   }
 
