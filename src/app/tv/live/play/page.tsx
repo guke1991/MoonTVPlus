@@ -22,9 +22,10 @@ const REMOTE_KEY_DEDUPE_MS = 350;
 function loadTVVolumeState() {
   if (typeof window === 'undefined') return { volume: 1, muted: false };
 
-  const savedVolume = Number(localStorage.getItem(TV_VOLUME_KEY));
-  const volume = Number.isFinite(savedVolume)
-    ? Math.max(0, Math.min(1, savedVolume))
+  const savedVolume = localStorage.getItem(TV_VOLUME_KEY);
+  const parsedVolume = savedVolume === null ? NaN : Number(savedVolume);
+  const volume = Number.isFinite(parsedVolume)
+    ? Math.max(0, Math.min(1, parsedVolume))
     : 1;
   const savedMuted = localStorage.getItem(TV_MUTED_KEY);
 
@@ -586,9 +587,9 @@ function TVLivePlayClient() {
           </div>
         </aside>
       )}
-      {digitBuffer && <div className='absolute right-10 top-32 rounded-3xl bg-black/75 px-7 py-5 text-5xl font-black text-white shadow-2xl'>频道 {digitBuffer}</div>}
+      {digitBuffer && <div className='absolute right-10 top-32 z-[90] rounded-3xl bg-black/75 px-7 py-5 text-5xl font-black text-white shadow-2xl'>频道 {digitBuffer}</div>}
       {channelHint && (
-        <div className='absolute right-20 top-24 max-w-[520px] rounded-3xl bg-black/80 px-7 py-5 text-right text-white shadow-2xl backdrop-blur'>
+        <div className='absolute right-20 top-24 z-[70] max-w-[520px] rounded-3xl bg-black/80 px-7 py-5 text-right text-white shadow-2xl backdrop-blur'>
           <div className='text-2xl font-black text-rose-200'>#{channelHint.number}</div>
           <div className='mt-1 line-clamp-1 text-4xl font-black'>{channelHint.name}</div>
         </div>

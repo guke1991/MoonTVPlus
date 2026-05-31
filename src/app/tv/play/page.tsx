@@ -69,6 +69,7 @@ const TV_DANMAKU_MAX_ITEMS = 3000;
 const TV_DANMAKU_SETTINGS_KEY = 'tv_danmaku_settings';
 const TV_VOLUME_KEY = 'tv_player_volume';
 const TV_MUTED_KEY = 'tv_player_muted';
+const REMOTE_KEY_DEDUPE_MS = 350;
 
 type TVDanmakuSettings = {
   fontSize: number;
@@ -85,9 +86,10 @@ const DEFAULT_TV_DANMAKU_SETTINGS: TVDanmakuSettings = {
 function loadTVVolumeState() {
   if (typeof window === 'undefined') return { volume: 1, muted: false };
 
-  const savedVolume = Number(localStorage.getItem(TV_VOLUME_KEY));
-  const volume = Number.isFinite(savedVolume)
-    ? Math.max(0, Math.min(1, savedVolume))
+  const savedVolume = localStorage.getItem(TV_VOLUME_KEY);
+  const parsedVolume = savedVolume === null ? NaN : Number(savedVolume);
+  const volume = Number.isFinite(parsedVolume)
+    ? Math.max(0, Math.min(1, parsedVolume))
     : 1;
   const savedMuted = localStorage.getItem(TV_MUTED_KEY);
 
@@ -292,6 +294,7 @@ function TVPlayClient() {
   const idleTimerRef = useRef<number | null>(null);
   const volumeHintTimerRef = useRef<number | null>(null);
   const seekHintTimerRef = useRef<number | null>(null);
+  const menuKeyTimeRef = useRef(0);
   const spawnedDanmakuRef = useRef<Set<string>>(new Set());
   const lastDanmakuTimeRef = useRef(0);
   const skippedIntroRef = useRef('');
@@ -846,9 +849,19 @@ function TVPlayClient() {
       const isMenuKey =
         event.key === 'ContextMenu' ||
         event.key === 'Menu' ||
-        event.keyCode === 93;
+        event.key === 'BrowserContextMenu' ||
+        event.code === 'ContextMenu' ||
+        event.code === 'Menu' ||
+        event.keyCode === 93 ||
+        event.keyCode === 82 ||
+        event.which === 93 ||
+        event.which === 82;
       if (isMenuKey) {
         event.preventDefault();
+        event.stopImmediatePropagation();
+        const now = Date.now();
+        if (now - menuKeyTimeRef.current < REMOTE_KEY_DEDUPE_MS) return;
+        menuKeyTimeRef.current = now;
         if (showPanel || showEpisodes || showDanmakuSettings) {
           setShowPanel(false);
           setShowEpisodes(false);
@@ -1026,6 +1039,21 @@ function TVPlayClient() {
           ? 'true'
           : 'false'
       }
+      onContextMenu={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const now = Date.now();
+        if (now - menuKeyTimeRef.current < REMOTE_KEY_DEDUPE_MS) return;
+        menuKeyTimeRef.current = now;
+        if (showPanel || showEpisodes || showDanmakuSettings) {
+          setShowPanel(false);
+          setShowEpisodes(false);
+          setShowDanmakuSettings(false);
+          blurTVPlayerControl();
+        } else {
+          revealPanel();
+        }
+      }}
       className='fixed inset-0 overflow-hidden bg-black text-white'
     >
       {videoUrl ? (
